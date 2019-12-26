@@ -14,7 +14,7 @@
   (define (string->json str)
     (let ([in (open-string-input-port str)])
       (guard (con
-              ([(and (error? con)
+              ([(and (who-condition? con)
                      (eq? 'get-json (condition-who con)))
                 (apply error
                        'string->json
@@ -195,7 +195,7 @@
     (call-with-string-output-port
       (lambda (out)
         (guard (con
-                ([(and (error? con)
+                ([(and (who-condition? con)
                        (eq? 'put-json (condition-who con)))
                   (apply error
                          'json->string
