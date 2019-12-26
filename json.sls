@@ -1,5 +1,6 @@
 (library (qk json)
-  (export string->json json->string json-null? json-null)
+  (export string->json json->string json-null? json-null
+          get-json)
   (import (rnrs))
 
   (define json-null 'null)
@@ -7,17 +8,20 @@
   (define (json-null? x)
     (eq? x 'null))
 
+  (define (get-json in)
+    (parse-json in))
+
   (define (string->json str)
     (let ([in (open-string-input-port str)])
       (guard (con
               ([(and (error? con)
-                     (eq? 'string->json (condition-who con)))
+                     (eq? 'get-json (condition-who con)))
                 (apply error
                        'string->json
                        (condition-message con)
-                       (append (condition-irritants con)
-                               (list str)))]))
-        (parse-json in))))
+                       (cons (condition-irritants con)
+                             (list str)))]))
+        (get-json in))))
 
   (define (char-degit? c)
     (case c
@@ -40,7 +44,7 @@
      [else 'done]))
 
   (define (fail type c)
-    (error 'string->json
+    (error 'get-json
            (string-append (symbol->string type) " error")
            c))
 
