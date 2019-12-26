@@ -8,19 +8,12 @@
   (define (json-null? x)
     (eq? x 'null))
 
-  (define (get-json in)
-    (parse-json in))
-
   (define (string->json str)
     (let ([in (open-string-input-port str)])
       (guard (con
               ([(and (who-condition? con)
                      (eq? 'get-json (condition-who con)))
-                (apply error
-                       'string->json
-                       (condition-message con)
-                       (append (condition-irritants con)
-                               (list str)))]))
+                (error 'string->json "invalid json string" str)]))
         (get-json in))))
 
   (define (char-degit? c)
@@ -48,83 +41,83 @@
            (string-append (symbol->string type) " error")
            c))
 
-  (define (parse-json in)
+  (define (get-json in)
     (skip-whitespace in)
     (let ([c (peek-char in)])
       (cond
-       [(eof-object? c) (fail/get 'parse-json c)]
+       [(eof-object? c) (fail/get 'get-json c)]
        [(char=? c #\{)
-        (parse-object in)]
+        (get-json/object in)]
        [(char=? c #\[)
-        (parse-array in)]
+        (get-json/array in)]
        [(char-degit? c)
-        (parse-number in)]
+        (get-json/number in)]
        [(char=? c #\")
-        (parse-string in)]
+        (get-json/string in)]
        [(char-alphabetic? c)
-        (case (parse-symbol in)
+        (case (get-json/symbol in)
           [(true) #t]
           [(false) #f]
           [(null) json-null]
-          [else (fail/get 'parse-json c)])]
-       [else (fail/get 'parse-json c)])))
+          [else (fail/get 'get-json c)])]
+       [else (fail/get 'get-json c)])))
 
-  (define (parse-object in)
+  (define (get-json/object in)
     (get-char in)                       ; drop #\{
     (skip-whitespace in)
     (let ([c (peek-char in)])
       (cond
-       [(eof-object? c) (fail/get 'parse-object c)]
+       [(eof-object? c) (fail/get 'get-json/object c)]
        [(char=? c #\})
         (get-char in)
         '()]
        [else
-        (%parse-object in)])))
+        (%get-json/object in)])))
 
-  (define (%parse-object in)
+  (define (%get-json/object in)
     (skip-whitespace in)
-    (let ([key (parse-string in)])
+    (let ([key (get-json/string in)])
       (skip-whitespace in)
       (let ([value
              (let ([c (get-char in)])
                (cond
-                [(eof-object? c) (fail/get 'parse-object c)]
+                [(eof-object? c) (fail/get 'get-json/object c)]
                 [(char=? c #\:)
-                 (parse-json in)]
-                [else (fail/get 'parse-object c)]))])
+                 (get-json in)]
+                [else (fail/get 'get-json/object c)]))])
         (skip-whitespace in)
         (cons (cons key value)
               (let ([c (get-char in)])
                 (cond
-                 [(eof-object? c) (fail/get 'parse-object c)]
+                 [(eof-object? c) (fail/get 'get-json/object c)]
                  [(char=? c #\,)
-                  (%parse-object in)]
+                  (%get-json/object in)]
                  [(char=? c #\})
                   '()]
-                 [else (fail/get 'parse-object c)]))))))
+                 [else (fail/get 'get-json/object c)]))))))
 
-  (define (parse-array in)
+  (define (get-json/array in)
     (get-char in)                       ; drop #\[
     (list->vector
      (let ([c (peek-char in)])
        (cond
-        [(eof-object? c) (fail/get 'parse-array c)]
+        [(eof-object? c) (fail/get 'get-json/array c)]
         [(char=? c #\]) '()]
         [else
-         (%parse-array in)]))))
+         (%get-json/array in)]))))
 
-  (define (%parse-array in)
-    (let ([first (parse-json in)])
+  (define (%get-json/array in)
+    (let ([first (get-json in)])
       (skip-whitespace in)
       (let ([c (get-char in)])
         (cons first
               (cond
-               [(eof-object? c) (fail/get parse-array c)]
-               [(char=? c #\,) (%parse-array in)]
+               [(eof-object? c) (fail/get get-json/array c)]
+               [(char=? c #\,) (%get-json/array in)]
                [(char=? c #\]) '()]
-               [else (fail/get parse-array c)])))))
+               [else (fail/get get-json/array c)])))))
 
-  (define (parse-string in)
+  (define (get-json/string in)
     (get-char in)
     (call-with-string-output-port
       (lambda (out)
@@ -147,7 +140,7 @@
                        [(string->number s 16)
                         => (lambda (n)
                              (put-char out (integer->char s)))]
-                       [else (fail/get 'parse-string c)]))]
+                       [else (fail/get 'get-json/string c)]))]
                    [else
                     (put-char out #\\)
                     (put-char out c)]))
@@ -156,7 +149,7 @@
                (put-char out c)
                (loop)]))))))
 
-  (define (parse-number in)
+  (define (get-json/number in)
     (define number/string
       (call-with-string-output-port
         (lambda (out)
@@ -175,9 +168,9 @@
                [else 'done]))))))
     (cond
      [(string->number number/string) => values]
-     [else (error 'string->json "parse-number error")]))
+     [else (error 'string->json "get-json/number error")]))
     
-  (define (parse-symbol in)
+  (define (get-json/symbol in)
     (string->symbol
      (call-with-string-output-port
        (lambda (out)
@@ -197,11 +190,7 @@
         (guard (con
                 ([(and (who-condition? con)
                        (eq? 'put-json (condition-who con)))
-                  (apply error
-                         'json->string
-                         (condition-message con)
-                         (append (condition-irritants con)
-                                 (list json)))]))
+                  (error 'json->string "invalid json sexp" json)]))
           (put-json out json)))))
 
   (define (fail/put type json)
