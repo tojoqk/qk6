@@ -43,7 +43,7 @@
       (skip-whitespace in)]
      [else 'done]))
 
-  (define (fail type c)
+  (define (fail/get type c)
     (error 'get-json
            (string-append (symbol->string type) " error")
            c))
@@ -52,7 +52,7 @@
     (skip-whitespace in)
     (let ([c (peek-char in)])
       (cond
-       [(eof-object? c) (fail 'parse-json c)]
+       [(eof-object? c) (fail/get 'parse-json c)]
        [(char=? c #\{)
         (parse-object in)]
        [(char=? c #\[)
@@ -66,15 +66,15 @@
           [(true) #t]
           [(false) #f]
           [(null) json-null]
-          [else (fail 'parse-json c)])]
-       [else (fail 'parse-json c)])))
+          [else (fail/get 'parse-json c)])]
+       [else (fail/get 'parse-json c)])))
 
   (define (parse-object in)
     (get-char in)                       ; drop #\{
     (skip-whitespace in)
     (let ([c (peek-char in)])
       (cond
-       [(eof-object? c) (fail 'parse-object c)]
+       [(eof-object? c) (fail/get 'parse-object c)]
        [(char=? c #\})
         (get-char in)
         '()]
@@ -88,27 +88,27 @@
       (let ([value
              (let ([c (get-char in)])
                (cond
-                [(eof-object? c) (fail 'parse-object c)]
+                [(eof-object? c) (fail/get 'parse-object c)]
                 [(char=? c #\:)
                  (parse-json in)]
-                [else (fail 'parse-object c)]))])
+                [else (fail/get 'parse-object c)]))])
         (skip-whitespace in)
         (cons (cons key value)
               (let ([c (get-char in)])
                 (cond
-                 [(eof-object? c) (fail 'parse-object c)]
+                 [(eof-object? c) (fail/get 'parse-object c)]
                  [(char=? c #\,)
                   (%parse-object in)]
                  [(char=? c #\})
                   '()]
-                 [else (fail 'parse-object c)]))))))
+                 [else (fail/get 'parse-object c)]))))))
 
   (define (parse-array in)
     (get-char in)                       ; drop #\[
     (list->vector
      (let ([c (peek-char in)])
        (cond
-        [(eof-object? c) (fail 'parse-array c)]
+        [(eof-object? c) (fail/get 'parse-array c)]
         [(char=? c #\]) '()]
         [else
          (%parse-array in)]))))
@@ -119,10 +119,10 @@
       (let ([c (get-char in)])
         (cons first
               (cond
-               [(eof-object? c) (fail parse-array c)]
+               [(eof-object? c) (fail/get parse-array c)]
                [(char=? c #\,) (%parse-array in)]
                [(char=? c #\]) '()]
-               [else (fail parse-array c)])))))
+               [else (fail/get parse-array c)])))))
 
   (define (parse-string in)
     (get-char in)
