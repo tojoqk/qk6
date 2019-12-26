@@ -1,6 +1,15 @@
 (library (qk xml)
-  (export put-xml)
+  (export put-xml xml->string)
   (import (rename (rnrs) [put-string %put-string]))
+
+  (define (xml->string xml)
+    (call-with-string-output-port
+      (lambda (out)
+        (guard (con
+                ([(and (who-condition? con)
+                       (eq? 'put-xml (condition-who con)))
+                  (error 'xml->string "invalid xml sexp" xml)]))
+          (put-xml out xml)))))
 
   (define-syntax put-string
     (lambda (ctx)
