@@ -19,8 +19,8 @@
                 (apply error
                        'string->json
                        (condition-message con)
-                       (cons (condition-irritants con)
-                             (list str)))]))
+                       (append (condition-irritants con)
+                               (list str)))]))
         (get-json in))))
 
   (define (char-degit? c)
@@ -200,8 +200,8 @@
                   (apply error
                          'json->string
                          (condition-message con)
-                         (cons (condition-irritants con)
-                               (list json)))]))
+                         (append (condition-irritants con)
+                                 (list json)))]))
           (put-json out json)))))
 
   (define (fail/put type json)
@@ -297,5 +297,5 @@
      [(boolean? json) (put-json/boolean out json)]
      [(json-null? json) (put-json/null out json)]
      [else
-      (fail/put 'put-json 'json)]))
+      (fail/put 'put-json json)]))
   )
