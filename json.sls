@@ -1,6 +1,6 @@
 (library (qk json)
   (export string->json json->string json-null? json-null
-          get-json)
+          get-json put-json)
   (import (rnrs))
 
   (define json-null 'null)
@@ -147,7 +147,7 @@
                        [(string->number s 16)
                         => (lambda (n)
                              (put-char out (integer->char s)))]
-                       [else (fail 'parse-string c)]))]
+                       [else (fail/get 'parse-string c)]))]
                    [else
                     (put-char out #\\)
                     (put-char out c)]))
@@ -191,83 +191,111 @@
                (loop)]
               [else 'done])))))))
   
-  (define (json->string sexp)
+  (define (json->string json)
     (call-with-string-output-port
       (lambda (out)
-        (%json->string
-         out sexp
-         (lambda ()
-           (error 'json->string "fail to convert json string" sexp))))))
-        
-  (define (%json->string out sexp fail)
+        (guard (con
+                ([(and (error? con)
+                       (eq? 'put-json (condition-who con)))
+                  (apply error
+                         'json->string
+                         (condition-message con)
+                         (cons (condition-irritants con)
+                               (list json)))]))
+          (put-json out json)))))
+
+  (define (fail/put type json)
+    (error 'put-json
+           (string-append (symbol->string type) " error")
+           json))
+
+  (define (put-json/object out json)
     (cond
-     [(list? sexp)
-      (cond
-       [(null? sexp)
-        (put-string out "{}")]
-       [else
-        (put-char out #\{)
-        (let loop ([sexp sexp])
-          (define (put-pair)
-            (let ([pair (car sexp)])
-              (cond
-               [(and (pair? pair)
-                     (string? (car pair)))
-                (put-char out #\")
-                (put-string out (car pair))
-                (put-char out #\")
-                (put-char out #\:)
-                (%json->string out (cdr pair) fail)]
-               [else (fail)])))
-          (cond
-           [(null? (cdr sexp))
-            (put-pair)
-            (put-char out #\})]
-           [else
-            (put-pair)
-            (put-char out #\,)
-            (loop (cdr sexp))]))])]
-     [(vector? sexp)
-      (let ([n (vector-length sexp)])
-        (cond
-         [(= n 0)
-          (put-string out "[]")]
-         [else
-          (put-char out #\[)
-          (let loop ([i 0])
-            (cond
-             [(= i (- n 1))
-              (%json->string out (vector-ref sexp i) fail)
-              (put-char out #\])]
-             [else
-              (%json->string out (vector-ref sexp i) fail)
-              (put-char out #\,)
-              (loop (+ i 1))]))]))]
-     [(string? sexp)
-      (put-char out #\")
-      (string-for-each
-       (lambda (c)
-         (case c
-           [(#\newline) (put-string out "\\n")]
-           [(#\tab) (put-string out "\\t")]
-           [(#\return) (put-string out "\\r")]
-           [(#\backspace) (put-string out "\\b")]
-           [(#\x000c) (put-string out "\\f")]
-           [else
-            (put-char out c)]))
-       sexp)
-      (put-char out #\")]
-     [(integer? sexp) (display sexp out)]
-     [(real? sexp)
-      (display (if (exact? sexp)
-                   (inexact sexp)
-                   sexp)
-               out)]
-     [(boolean? sexp)
-      (if sexp
-          (put-string out "true")
-          (put-string out "false"))]
-     [(json-null? sexp)
-      (put-string out "null")]
+     [(null? json)
+      (put-string out "{}")]
      [else
-      (fail)])))
+      (put-char out #\{)
+      (let loop ([json json])
+        (define (put-pair)
+          (let ([pair (car json)])
+            (cond
+             [(and (pair? pair)
+                   (string? (car pair)))
+              (put-char out #\")
+              (put-string out (car pair))
+              (put-char out #\")
+              (put-char out #\:)
+              (put-json out (cdr pair))]
+             [else (fail/put 'put-json/object json)])))
+        (cond
+         [(null? (cdr json))
+          (put-pair)
+          (put-char out #\})]
+         [else
+          (put-pair)
+          (put-char out #\,)
+          (loop (cdr json))]))]))
+
+  (define (put-json/array out json)
+    (let ([n (vector-length json)])
+      (cond
+       [(= n 0)
+        (put-string out "[]")]
+       [else
+        (put-char out #\[)
+        (let loop ([i 0])
+          (cond
+           [(= i (- n 1))
+            (put-json out (vector-ref json i))
+            (put-char out #\])]
+           [else
+            (put-json out (vector-ref json i))
+            (put-char out #\,)
+            (loop (+ i 1))]))])))
+
+  (define (put-json/string out json)
+    (put-char out #\")
+    (string-for-each
+     (lambda (c)
+       (case c
+         [(#\newline) (put-string out "\\n")]
+         [(#\tab) (put-string out "\\t")]
+         [(#\return) (put-string out "\\r")]
+         [(#\backspace) (put-string out "\\b")]
+         [(#\x000c) (put-string out "\\f")]
+         [else
+          (put-char out c)]))
+     json)
+    (put-char out #\"))
+
+  (define (put-json/number out json)
+    (put-string out
+                (number->string
+                 (cond
+                  [(integer? json) json]
+                  [(real? json)
+                   (if (exact? json)
+                       (inexact json)
+                       json)]
+                  [else
+                   (fail/put 'put-json/number json)]))))
+
+  (define (put-json/boolean out json)
+    (if json
+        (put-string out "true")
+        (put-string out "false")))
+
+  (define (put-json/null out json)
+    (put-string out "null"))
+
+  (define (put-json out json)
+    (cond
+     [(list? json) (put-json/object out json)]
+     [(vector? json) (put-json/array out json)]
+     [(string? json) (put-json/string out json)]
+     [(number? json) (put-json/number out json)]
+     [(boolean? json) (put-json/boolean out json)]
+     [(json-null? json) (put-json/null out json)]
+     [else
+      (fail/put 'put-json 'json)]))
+  )
