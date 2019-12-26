@@ -74,19 +74,27 @@
       (put-string out "<")
       (put-xml/symbol out tag)
       (for-each (lambda (attr) (put-xml/attr out attr)) attrs)
-      (put-string out ">")
-      (for-each (lambda (x) (put-xml out x)) body)
-      (put-string out "</")
-      (put-xml/symbol out tag)
-      (put-string out ">")))
+      (cond
+       [(null? body)
+        (put-string out "/>")]
+       [else
+        (put-string out ">")
+        (for-each (lambda (x) (put-xml out x)) body)
+        (put-string out "</")
+        (put-xml/symbol out tag)
+        (put-string out ">")])))
 
   (define (put-xml/tag out xml)
     (let ([tag (car xml)]
           [body (cdr xml)])
       (put-string out "<")
       (put-xml/symbol out tag)
-      (put-string out ">")
-      (for-each (lambda (x) (put-xml out x)) body)
-      (put-string out "</")
-      (put-xml/symbol out tag)
-      (put-string out ">"))))
+      (cond
+       [(null? body)
+        (put-string out "/>")]
+       [else
+        (put-string out ">")
+        (for-each (lambda (x) (put-xml out x)) body)
+        (put-string out "</")
+        (put-xml/symbol out tag)
+        (put-string out ">")]))))
