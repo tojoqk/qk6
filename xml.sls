@@ -76,9 +76,9 @@
       (for-each (lambda (attr) (put-xml/attr out attr)) attrs)
       (put-string out ">")
       (for-each (lambda (x) (put-xml out x)) body)
-      (put-string out "<")
+      (put-string out "</")
       (put-xml/symbol out tag)
-      (put-string out "/>")))
+      (put-string out ">")))
 
   (define (put-xml/tag out xml)
     (let ([tag (car xml)]
