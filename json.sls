@@ -16,11 +16,7 @@
       (guard (con
               ([(and (who-condition? con)
                      (eq? 'get-json (condition-who con)))
-                (apply error
-                       'string->json
-                       (condition-message con)
-                       (cons (condition-irritants con)
-                             (list str)))]))
+                (error 'string->json "invalid json string" str)]))
         (get-json in))))
 
   (define (char-degit? c)
@@ -197,11 +193,7 @@
         (guard (con
                 ([(and (who-condition? con)
                        (eq? 'put-json (condition-who con)))
-                  (apply error
-                         'json->string
-                         (condition-message con)
-                         (cons (condition-irritants con)
-                               (list json)))]))
+                  (error 'json->string "invalid json sexp" json)]))
           (put-json out json)))))
 
   (define (fail/put type json)
@@ -297,5 +289,5 @@
      [(boolean? json) (put-json/boolean out json)]
      [(json-null? json) (put-json/null out json)]
      [else
-      (fail/put 'put-json 'json)]))
+      (fail/put 'put-json json)]))
   )
