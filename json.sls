@@ -1,4 +1,4 @@
-(library (qk json)
+(library (qk6 json)
   (export string->json json->string json-null? json-null
           get-json put-json)
   (import (rnrs))
