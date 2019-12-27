@@ -1,4 +1,4 @@
-(library (qk xml)
+(library (qk6 xml)
   (export put-xml xml->string)
   (import (rename (rnrs) [put-string %put-string]))
 
