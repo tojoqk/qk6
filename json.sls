@@ -98,11 +98,14 @@
 
   (define (get-json/array in)
     (get-char in)                       ; drop #\[
+    (skip-whitespace in)
     (list->vector
      (let ([c (peek-char in)])
        (cond
         [(eof-object? c) (fail/get 'get-json/array c)]
-        [(char=? c #\]) '()]
+        [(char=? c #\])
+         (get-char in)                  ; drop #\]
+         '()]
         [else
          (%get-json/array in)]))))
 
