@@ -1,7 +1,13 @@
 (library (qk6 json)
-  (export string->json json->string json-null? json-null
-          get-json put-json)
-  (import (rnrs))
+  (export json-null? json-null
+          get-json put-json
+          string->json json->string)
+  (import (rnrs base)
+          (rnrs exceptions)
+          (rnrs conditions)
+          (rnrs io ports)
+          (rnrs io simple)
+          (rnrs unicode))
 
   (define json-null 'null)
 
@@ -98,11 +104,14 @@
 
   (define (get-json/array in)
     (get-char in)                       ; drop #\[
+    (skip-whitespace in)
     (list->vector
      (let ([c (peek-char in)])
        (cond
         [(eof-object? c) (fail/get 'get-json/array c)]
-        [(char=? c #\]) '()]
+        [(char=? c #\])
+         (get-char in)                  ; drop #\]
+         '()]
         [else
          (%get-json/array in)]))))
 
