@@ -1,0 +1,21 @@
+name: test
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install chezscheme
+      run: sudo apt-get install chezscheme
+    - name: Symlink to current directory
+      run: ln -s . qk6
+    - name: Run tests
+      run: |
+        for program in test/*.sps
+        do
+          CHEZSCHEMELIBDIRS=./ scheme --program $program
+        done
