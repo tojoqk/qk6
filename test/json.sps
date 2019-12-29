@@ -1,4 +1,4 @@
-(import (rnrs)
+(import (rnrs base)
         (qk6 json))
 
 (define string/string "\"hello, world!\"")
