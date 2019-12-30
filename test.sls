@@ -108,15 +108,15 @@
 
   (define-syntax test-equal
     (syntax-rules ()
-      [(_ given expected)
+      [(_ expected given)
        (%test-assert 'test-equal (equal? given expected))]))
 
   (define-syntax test-eqv
     (syntax-rules ()
-      [(_ given expected)
+      [(_ expected given)
        (%test-assert 'test-eqv (eqv? given expected))]))
 
   (define-syntax test-eq
     (syntax-rules ()
-      [(_ given expected)
+      [(_ expected given)
        (%test-assert 'test-eq (eq? given expected))])))
