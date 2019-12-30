@@ -1,6 +1,15 @@
 (library (qk6 xml)
   (export put-xml xml->string)
-  (import (rename (rnrs) [put-string %put-string]))
+  (import (rnrs base)
+          (rnrs syntax-case)
+          (rnrs exceptions)
+          (rnrs conditions)
+          (rnrs lists)
+          (rename (only (rnrs io ports)
+                        put-string
+                        put-char
+                        call-with-string-output-port)
+                  [put-string %put-string]))
 
   (define (xml->string xml)
     (call-with-string-output-port
