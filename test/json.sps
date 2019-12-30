@@ -34,26 +34,47 @@
 (define array-3/json '#(42 42.0 #f))
 (define nested-array/json '#(#() #(#(#()) #("a" "b"))))
 
-(test-equal (string->json string/string) string/json)
-(test-equal (string->json number/string) number/json)
-(test-equal (string->json empty-object/string) empty-object/json)
-(test-equal (string->json object-1/string) object-1/json)
-(test-equal (string->json object-3/string) object-3/json)
-(test-equal (string->json nested-object/string) nested-object/json)
-(test-equal (string->json empty-array/string) empty-array/json)
-(test-equal (string->json empty-array-1/string) empty-array/json)
-(test-equal (string->json array-1/string) array-1/json)
-(test-equal (string->json array-3/string) array-3/json)
-(test-equal (string->json nested-array/string) nested-array/json)
+(test-equal string/json
+  (string->json string/string))
+(test-equal number/json
+  (string->json number/string))
+(test-equal empty-object/json
+  (string->json empty-object/string))
+(test-equal object-1/json
+  (string->json object-1/string))
+(test-equal object-3/json
+  (string->json object-3/string))
+(test-equal nested-object/json
+  (string->json nested-object/string))
+(test-equal empty-array/json
+  (string->json empty-array/string))
+(test-equal (string->json empty-array-1/string)
+  empty-array/json)
+(test-equal array-1/json
+  (string->json array-1/string))
+(test-equal array-3/json
+  (string->json array-3/string))
+(test-equal (string->json nested-array/string)
+  nested-array/json)
 
-(test-equal (json->string string/json) string/string)
-(test-equal (json->string number/json) number/string)
-(test-equal (json->string empty-object/json) empty-object/string)
-(test-equal (json->string object-1/json) object-1/string)
-(test-equal (json->string object-3/json) object-3/string)
-(test-equal (json->string nested-object/json) normalized-nested-object/string)
-(test-equal (json->string empty-array/json) empty-array/string)
-(test-equal (json->string array-1/json) array-1/string)
-(test-equal (json->string array-3/json) normalized-array-3/string)
-(test-equal (json->string nested-array/json) normalized-nested-array/string)
+(test-equal string/string
+  (json->string string/json))
+(test-equal number/string
+  (json->string number/json))
+(test-equal empty-object/string
+  (json->string empty-object/json))
+(test-equal object-1/string
+  (json->string object-1/json))
+(test-equal object-3/string
+  (json->string object-3/json))
+(test-equal normalized-nested-object/string
+  (json->string nested-object/json))
+(test-equal empty-array/string
+  (json->string empty-array/json))
+(test-equal array-1/string
+  (json->string array-1/json))
+(test-equal normalized-array-3/string
+  (json->string array-3/json))
+(test-equal normalized-nested-array/string
+  (json->string nested-array/json))
 (test-end "json")
